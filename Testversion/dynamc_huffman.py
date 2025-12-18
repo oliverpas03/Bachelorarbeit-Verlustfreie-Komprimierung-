@@ -118,12 +118,12 @@ def huffman_decode(code, bit_string):
     
     for bit in bit_string:
         # Konsistenter Datentyp
-        bit_int = int(bit) if isinstance(bit, str) else bit
+       
         
         # if-elif statt zwei if
-        if bit_int == 0:
+        if bit == "0":
             node = node.left
-        elif bit_int == 1:
+        elif bit == "1":
             node = node.right
         
         # Fehlerbehandlung
