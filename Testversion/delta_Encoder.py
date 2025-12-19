@@ -63,6 +63,8 @@ class DeltaEncoder:
         for diff in differences:
             diff_str = str(diff)
             huff.huffman_encode(self.code, diff_str)
+            #print("Differenzen vor kodierung")
+            #print(diff_str)
         
         # PHASE 2: ENCODING
         bit_string = str(type_bit)  # Start mit Typ-Bit
@@ -130,9 +132,14 @@ class DeltaDecoder:
 
         
         values = []
+        #print("werte nach dekomprimierung")
         for i in range(  len(differences)-4):
-            values.append(prev_data.get( f"value{i}", 0) +int(differences[i+4]))
+            new_value = int(differences[i+4])
+            prev_value = prev_data.get( f"value_{i}", 0)
+            values.append( prev_value+new_value)
             reconstructed_line.append(values[i])
+           # print(differences[i+4])
+            
 
 
         new_prev_data = {
@@ -169,8 +176,7 @@ GPS,3890794210,10211,18.04.2023,08:10:10,0,0,0,1,B,-1
 ACC,3890794210,10211,18.04.2023,08:10:10,-6454,2930,-2860
 GPS,3890794211,10211,18.04.2023,08:10:11,0,0,0,1,B,-1""")
     
-    print("\nKodiere erste Zeile mit ZWEI PHASEN:")
-    print("-"*70)
+    
     
     encoder = DeltaEncoder()
     decoder = DeltaDecoder()

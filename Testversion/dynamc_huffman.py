@@ -117,10 +117,10 @@ def huffman_decode(code, bit_string):
     node = code.root
     
     for bit in bit_string:
-        # Konsistenter Datentyp
+      
        
         
-        # if-elif statt zwei if
+        
         if bit == "0":
             node = node.left
         elif bit == "1":
