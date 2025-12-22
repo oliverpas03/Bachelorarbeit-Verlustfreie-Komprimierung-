@@ -3,7 +3,9 @@ import numpy as np
 
 import huffman as huff
 
-def read_table_from_file( filename) -> dict[int,str]: 
+filename = 'Huffman_tabelle.json'
+
+def read_table_from_file( ) -> dict[int,str]: 
   
     with open(filename, 'r') as file:
          d = json.load(file)
@@ -66,7 +68,9 @@ def decode_deltas( array ):
     return array
 
 
-def decode( bit_string, codetable   ) :
+def decode( bit_string, codetable = None   ) :
+     if ( codetable == None):
+         codetable = read_table_from_file()
      
      huffman_tree = build_tree(codetable)
 

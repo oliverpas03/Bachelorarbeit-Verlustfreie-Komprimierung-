@@ -1,4 +1,10 @@
 import heapq
+import numpy as np
+import json 
+from numpy.typing import NDArray
+
+filename  = 'Huffman_tabelle.json'
+
 
 class Node:
     def __init__(self, symbol=None, frequency=None, parent=None):
@@ -10,7 +16,7 @@ class Node:
     def __lt__(self, other):
         return self.frequency < other.frequency
     
-def determine_frequency(array) -> dict[int,int]:
+def determine_frequency(array : NDArray[np.int16]) -> dict[int,int]:
     frequencys = {}
     if array.ndim == 1:
         # 1D Array
@@ -28,13 +34,7 @@ def determine_frequency(array) -> dict[int,int]:
                  else: 
                     frequencys.update( {int(value) : 1})
     return frequencys
-def generate_codes(node, code, codetable):
-       if node is not None:
-            if node.symbol is not None:
-               codetable[node.symbol] = code
-            generate_codes(node.left, code + [0], codetable)
-            generate_codes(node.right, code + [1], codetable)
-       return codetable
+
 
 def generate_huffmantree( frequencys : dict[int,int]) -> Node:
     heap = []
@@ -55,13 +55,29 @@ def generate_huffmantree( frequencys : dict[int,int]) -> Node:
     return heap[0]
 
 
-def generate_codes(node, code , codetable):
-    if node is not None:
-        if node.symbol is not None:
-            codetable[node.symbol] = code
-        generate_codes(node.left, code + '0', codetable)
-        generate_codes(node.right, code + '1', codetable)
+def generate_codes(node : Node) -> dict[int,str]:
+
+    def helper( node, code , codetable):
+         if node is not None:
+            if node.symbol is not None:
+               codetable[node.symbol] = code
+            helper(node.left, code + '0', codetable)
+            helper(node.right, code + '1', codetable)
+    
+         return codetable
+    
+    codetable = {}
+    helper(node,'', codetable)
+    write_table_to_file(codetable)
     return codetable
+
+   
+
+def write_table_to_file(codetable : dict[int,str]) -> None:
+
+  
+     with open(filename, 'w') as f:
+         json.dump(codetable, f)
 
 
 

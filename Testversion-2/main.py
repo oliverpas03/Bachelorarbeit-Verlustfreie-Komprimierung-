@@ -1,16 +1,20 @@
 import pandas as pd
 import numpy as np 
+from numpy.typing import NDArray
 
 import huffman as huff
 import decoder as dec 
 import encoder as enc 
 
 
-def remove_uneccesary_data( data):
+data_filename = 'test_sensor.csv'
+
+
+def remove_uneccesary_data( data) -> NDArray[np.int16]:
     data = data[data.iloc[:, 0] != 'GPS']
     data = data.iloc[:, 5:]
     data = data.reset_index(drop=True)
-    array_int = data.values.astype(int)
+    array_int = data.values.astype(np.int16)
 
     return array_int
 if __name__ == "__main__":
@@ -70,7 +74,7 @@ ACC,3897086388,10204,30.06.2023,03:59:48,3569,7182,1204,3695,7100,1147,3546,7191
  
   
     
-    data = pd.read_csv('test_sensor.csv', header=None)
+    data = pd.read_csv(data_filename, header=None)
 
     data_array = remove_uneccesary_data(data)
     original_daten = data_array.copy()
@@ -80,12 +84,11 @@ ACC,3897086388,10204,30.06.2023,03:59:48,3569,7182,1204,3695,7100,1147,3546,7191
 
     huffman_tree = huff.generate_huffmantree( frequencys)
 
-    codetable : dict[int, str]  = {}
-    huff.generate_codes(huffman_tree, '', codetable)
+    codetable : dict[int, str]  = huff.generate_codes(huffman_tree)
 
     for i in range(len(data_array)):
 
-        encoded_line = enc.encode_line(data_array[i], codetable)
+        encoded_line = enc.encode_line(original_daten[i], codetable)
         decoded_line = dec.decode(encoded_line,codetable)
         print( "Zeile " + str(i))
         print("Orignaldaten und dekodierte nachricht gleich: " + str(np.array_equal(original_daten[i], decoded_line)))
