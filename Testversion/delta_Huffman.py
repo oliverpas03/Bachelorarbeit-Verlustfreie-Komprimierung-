@@ -1,167 +1,104 @@
-import csv
-import dynamc_huffman as huff
+import numpy as np 
+import pandas as pd 
+import heapq
 
-def normalise_date(date):
-    day, month , year = date.split('.')
-    return  int(year + month + day)
-def normalise_time(time):
-    hour, minute , second = time.split(':')
-    return  int(hour+minute +second) 
+import json
 
-def denormalize_date(date):
-    year,month,day = date[:4], date[4:6], date[6:8]
-    return day+"."+month+"."+year
+class Node:
+    def __init__(self, symbol=None, frequency=None, parent=None):
+        self.symbol = symbol
+        self.frequency = frequency
+        self.left = None
+        self.right = None
+        self.parent = parent
+    def __lt__(self, other):
+        return self.frequency < other.frequency
 
-def denormalise_time(time):
-    if len(time) < 6: 
-        time = "0"+time
-    hour, minute , second = time[:2], time[2:4] , time[4:6]
-    return hour + ":"+minute+":"+second
-class DeltaEncoder:
-    
-    
-    def __init__(self):
-        self.prev_GPS_data = {}
-        self.prev_ACC_data = {}
-        self.code = huff.Huffman_Code()
-    
-    def encode_line(self, line):
-        """Kodiert eine Zeile zu Bit-String - ZWEI PHASEN"""
-        if line is None:
-            return None
-        
-        # Typ-Bit: Anstatt ACC oder GPS auch zu kodieren habe ich einfach festgelegt das sie jeweils den wet 0 oder eins haben
-        type_bit = 0 if line[0] == "ACC" else 1
-        
-        # Datum/Zeit normalisieren
-        date = normalise_date(line[3])
-        time = normalise_time(line[4])
-        
-        # Vorherige Daten wählen
-        prev_data = self.prev_ACC_data if type_bit == 0 else self.prev_GPS_data
-        
-        # Differenzen berechnen
-        differences = []
-        differences.append(int(line[1]) - prev_data.get('id', 0))
-        differences.append(int(line[2]) - prev_data.get('code', 0))
-        differences.append(date - prev_data.get('date', 0))
-        differences.append(time - prev_data.get('time', 0))
-        
-        for i in range(5, len(line)):
-            if line[i] == '-':
-                current_val = 0
-            else:
-                try:
-                    current_val = int(line[i])
-                except ValueError:
-                    current_val = ord(line[i])
-            
-            prev_val = prev_data.get(f'value_{i}', 0)
-            differences.append(current_val - prev_val)
-        
-        # PHASE 1: TRAINING
-        for diff in differences:
-            diff_str = str(diff)
-            huff.huffman_encode(self.code, diff_str)
-            #print("Differenzen vor kodierung")
-            #print(diff_str)
-        
-        # PHASE 2: ENCODING
-        bit_string = str(type_bit)  # Start mit Typ-Bit
-        for diff in differences:
-            diff_str = str(diff)
-            code_bits = self.code.codes[diff_str]
-            bit_string += ''.join(map(str, code_bits))
-        
-        # Update Zustand
-        new_prev_data = {
-            'id': int(line[1]),
-            'code': int(line[2]),
-            'date': date,
-            'time': time
-        }
-        for i in range(5, len(line)):
-            if line[i] == '-':
-                new_prev_data[f'value_{i}'] = 0
-            else:
-                try:
-                    new_prev_data[f'value_{i}'] = int(line[i])
-                except ValueError:
-                    new_prev_data[f'value_{i}'] = ord(line[i])
-        
-        if type_bit == 0:
-            self.prev_ACC_data = new_prev_data
-        else:
-            self.prev_GPS_data = new_prev_data
-        
-        return bit_string
     
 
-class DeltaDecoder:
-    def __init__(self):
-        self.prev_GPS_data = {}
-        self.prev_ACC_data = {}
-        self.code = huff.Huffman_Code()
 
-    def decode_line(self, bit_string):
-        type_bit , encoded_data = bit_string[0], bit_string[1:]
-        differences = huff.huffman_decode(self.code, encoded_data)
-
-        reconstructed_line = []
-        prev_data = {}
-
-        if type_bit == "0":
-            reconstructed_line.append("ACC")
-            prev_data = self.prev_ACC_data
-        else:
-            reconstructed_line.append("GPS")
-            prev_data = self.prev_GPS_data
-
-        
-        id = prev_data.get("id",0) + int(differences[0])
-        reconstructed_line.append(id)
-
-        code = prev_data.get("code", 0) +int( differences[1])
-        reconstructed_line.append(code)
-
-        date = prev_data.get("date",0) +int(differences[2])
-        reconstructed_line.append(denormalize_date(str(date)))
-
-        time = prev_data.get("time",0) +int( differences[3])
-        reconstructed_line.append( denormalise_time(str(time)))
-
-        
-        values = []
-        #print("werte nach dekomprimierung")
-        for i in range(  len(differences)-4):
-            new_value = int(differences[i+4])
-            prev_value = prev_data.get( f"value_{i}", 0)
-            values.append( prev_value+new_value)
-            reconstructed_line.append(values[i])
-           # print(differences[i+4])
-            
+def generate_codes(node, code, codetable):
+    if node is not None:
+        if node.symbol is not None:
+            codetable[node.symbol] = code
+        generate_codes(node.left, code + [0], codetable)
+        generate_codes(node.right, code + [1], codetable)
+    return codetable
 
 
-        new_prev_data = {
-            'id': id,
-            'code': code,
-            'date': date,
-            'time': time
-        }
-        for i in range(len(values)):
-            
-                try:
-                    new_prev_data[f'value_{i}'] = int(values[i])
-                except ValueError:
-                    new_prev_data[f'value_{i}'] = ord(values[i])
-        
-        if type_bit == "0":
-            self.prev_ACC_data = new_prev_data
-        else:
-            self.prev_GPS_data = new_prev_data
 
-        return reconstructed_line
-    
+def calculate_differences( array ):
+   for row in array: 
+       for i in range(3,len(array)):
+           row[i] = row[i] - row[i-3]
+
+def calculate_differences2(array):
+    if array.ndim == 1:
+        # 1D Array
+        for i in range(3, len(array)):
+            array[i] = array[i] - array[i-3]
+    else:
+          array[:, 3:] = array[:, 3:] - array[:, :-3]
+    return array
+
+def determine_frequency(array) -> dict[int,int]:
+    frequencys = {}
+    if array.ndim == 1:
+        # 1D Array
+         for value in array:
+            if value in frequencys.keys():
+                frequencys[int(value)] += 1
+            else: 
+                frequencys.update( {int(value) : 1})
+    else:
+
+         for row in array:
+              for value in row:
+                 if value in frequencys.keys():
+                    frequencys[int(value)] += 1
+                 else: 
+                    frequencys.update( {int(value) : 1})
+    return frequencys
+
+def generate_huffmantree( frequencys : dict[int,int]) -> Node:
+    heap = []
+    for value in frequencys.keys(): 
+        node = Node( symbol= value, frequency = frequencys[value])
+        heap.append( node)
+    heapq.heapify(heap)
+    while( len(heap ) > 1):
+        smallest_frequency = heapq.heappop(heap)
+        second_smallest_frequency = heapq.heappop(heap)
+
+        new_node = Node( frequency= smallest_frequency.frequency + second_smallest_frequency.frequency )
+
+        new_node.left = smallest_frequency
+        new_node.right = second_smallest_frequency
+
+        heapq.heappush(heap, new_node)
+    return heap[0]
+
+
+def generate_codes(node, code , codetable):
+    if node is not None:
+        if node.symbol is not None:
+            codetable[node.symbol] = code
+        generate_codes(node.left, code + '0', codetable)
+        generate_codes(node.right, code + '1', codetable)
+    return codetable
+
+
+
+def encode_line( line , codetable : dict[int , str]) -> str:
+    encoded_line = ''
+    for value in line:
+        encoded_line = encoded_line + codetable[value]
+    return encoded_line
+
+
+
+
+
 if __name__ == "__main__":
   
    
@@ -215,39 +152,37 @@ ACC,3897086388,10204,30.06.2023,03:59:48,3569,7182,1204,3695,7100,1147,3546,7191
     
     
     
-    encoder = DeltaEncoder()
-    decoder = DeltaDecoder()
-
-    decoder.code = encoder.code 
+ 
+  
     
-    with open('test_sensor.csv', 'r') as f:
+    data = pd.read_csv('test_sensor.csv', header=None)
 
-        csv_reader = csv.reader(f)
-        for line_num, line in enumerate(csv_reader, 1):
-            print(f"\nZeile {line_num}: {line}")
-            
-            result = encoder.encode_line(line)
-           
-      
-       
+    data = data[data.iloc[:, 0] != 'GPS']
+    data = data.iloc[:, 5:]
+    data = data.reset_index(drop=True)
+    array_int = data.values.astype(int)
 
-        
+    differences = calculate_differences2(array_int)
+    frequencys = determine_frequency(array_int)
 
-           # print(result)
+    huffman_tree = generate_huffmantree( frequencys)
 
-            decoded_result = decoder.decode_line(result)
+    codetable : dict[int, str]  = {}
+    generate_codes(huffman_tree, '', codetable)
 
-            print(decoded_result)
+    line = encode_line(array_int[0], codetable)
+
+    with open('Huffman_tabelle.json', 'w') as f:
+         json.dump(codetable, f)
+
+    with open('dictionary.json', 'r') as file:
+        d = json.load(file)
+
+
+    print(line)
+
+
+
     
 
         
-        
-        
-
-
-            
-
-
-
-
-
