@@ -22,8 +22,8 @@ def calculate_differences2(array : NDArray[np.int16]) -> NDArray[np.int16]:
 
 def encode_line( line :NDArray[np.int16], codetable : dict[int , str] = None) -> str:
 
-    differences = calculate_differences(line)
+    #differences = calculate_differences(line)
     encoded_line = ''
-    for value in differences:
+    for value in line:
         encoded_line = encoded_line + codetable[value]
     return encoded_line
