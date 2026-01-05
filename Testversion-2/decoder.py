@@ -68,11 +68,13 @@ def decode_deltas( array ):
     return array
 
 
-def decode( bit_string, codetable = None   ) :
+def decode( bit_string, huffman_tree = None   ) :
+     codetable = {}
      if ( codetable == None):
          codetable = read_table_from_file()
+         huffman_tree = build_tree(codetable)
      
-     huffman_tree = build_tree(codetable)
+    
 
      array_differences = decode_huffman(  huffman_tree, bit_string)
 

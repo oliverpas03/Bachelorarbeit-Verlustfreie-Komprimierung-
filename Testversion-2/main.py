@@ -8,17 +8,22 @@ import decoder as dec
 import encoder as enc 
 
 
-data_filename = 'Data/LOG10202.txt'
+data_filename = 'Data/LOG10201_Jährlinge.txt'
 
-
+def compression_ratio(originaldaten , codierte_daten):
+   return (len(originaldaten)* 16)/ len(codierte_daten)
 def remove_uneccesary_data( data) -> NDArray[np.int16]:
     data = data[data.iloc[:, 0] != 'GPS']
     data = data.iloc[:, 5:]
     data = data.reset_index(drop=True)
+    data = data.apply(pd.to_numeric, errors='coerce')
     data = data.fillna(0)
+    array = data.to_numpy(dtype=np.int32)
     array_int = data.values.astype(np.int16)
 
     return array_int
+
+
 if __name__ == "__main__":
   
  
@@ -49,24 +54,25 @@ if __name__ == "__main__":
     data_array = remove_uneccesary_data(data)
     original_daten = data_array.copy()
 
-    differences = enc.calculate_differences2(data_array)
+    differences = enc.calculate_differences(data_array)
     frequencys = huff.determine_frequency(data_array)
 
     huffman_tree = huff.generate_huffmantree( frequencys)
 
     codetable : dict[int, str]  = huff.generate_codes(huffman_tree)
-
+    ratios = []
+    overflowErrors = 0 
     for i in range(len(data_array)):
 
         encoded_line = enc.encode_line(data_array[i], codetable)
-        decoded_line = dec.decode(encoded_line,codetable)
-       # print( "Zeile " + str(i))
-       # print("Orignaldaten und dekodierte nachricht gleich: " + str(np.array_equal(original_daten[i], decoded_line)))
-       # print("")
+        decoded_line = dec.decode(encoded_line,huffman_tree)
+        ratios.append(compression_ratio(original_daten[i], encoded_line))
+       
         if np.array_equal(original_daten[i], decoded_line) == False:
-           print("Zeile "+str(i)+": Dekodierte Nachricht stimmt nicht mit Orginaldaten überein ")
-           #print(original_daten[i])
-           #print(decoded_line)
+          overflowErrors += 1
+    
+    print( "Kompressionsrate: " +str(np.mean(ratios)))
+    print( "Fehler: "+str(overflowErrors))
            
            
 
