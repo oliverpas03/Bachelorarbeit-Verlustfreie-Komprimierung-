@@ -71,14 +71,14 @@ if __name__ == "__main__":
   
     
     
-
-    data_array = remove_uneccesary_data(data)
+    
+    data_array = remove_uneccesary_data(data) #Array mit Daten
     original_daten = data_array.copy()
 
 
 
-    differences = enc.calculate_differences(data_array)
-    frequencys = huff.calculate_frequencys(differences)
+    differences = enc.calculate_differences(data_array) #Array mit den Deltas
+    frequencys = huff.calculate_frequencys(differences) #Häufigkeitstabelle als Array
    
 
     huffman_tree = huff.generate_huffmantree( frequencys)
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     ratios = []
     overflowErrors = 0 
     for i in range(len(data_array)):
-
+        #Eine Zeile Kodieren. Aktuell schon mit berecheten Deltas aus Geschwindikeitsgründen
         encoded_line = enc.encode_line(differences[i], codetable)
         decoded_line = dec.decode(encoded_line,huffman_tree)
         ratios.append(compression_ratio(original_daten[i], encoded_line))

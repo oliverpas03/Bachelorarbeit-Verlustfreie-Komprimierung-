@@ -10,10 +10,10 @@ filename  = 'Huffman_tabelle.json'
 class Node:
     def __init__(self, symbol=None, frequency=None, nodes= 1):
         self.symbol = symbol
-        self.frequency = frequency
+        self.frequency  = int(frequency)
         self.left = None
         self.right = None
-        self.nodes = nodes 
+        self.nodes  = int(nodes)
         
     def __lt__(self, other):
          if self.frequency != other.frequency:
@@ -32,7 +32,7 @@ def calculate_frequencys( data : NDArray[np.int16]) -> NDArray[np.uint16]:
         data (NDArray[np.int16]): Array mit  Werten deren Häufigkeit betimmt werden soll
 
     Returns:
-        NDArray[np.uint16]: Array das das Vorkommen von allen mögichen 16bit Integer Werte enthält
+        NDArray[np.uint16]: Array das das Vorkommen von allen mögichen 16bit Integer Werte enthält. Rückgabewert muss wahrscheinlich noch angepasst werden 
     """
    
     bins = np.arange(-32768,32769)

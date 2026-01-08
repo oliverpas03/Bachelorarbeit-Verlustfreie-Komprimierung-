@@ -108,15 +108,16 @@ def decode( bit_string, huffman_tree = None   )-> NDArray[np.int16] :
     Returns:
         NDArray[np.int16]: Array mit Messwerten 
     """
-    codetable = {}
-    if ( codetable == None):
+    
+    if ( huffman_tree == None):
          codetable = read_table_from_file()
          huffman_tree = build_tree(codetable)
      
     
-
+    #Aus Nachricht die Differenzwerte generieren.
     array_differences = decode_huffman(  huffman_tree, bit_string)
 
+    #Aus Differenzen die Messwerte berechen 
     array_data = decode_deltas( array_differences)
 
     return array_data

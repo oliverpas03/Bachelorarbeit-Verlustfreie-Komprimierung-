@@ -29,7 +29,7 @@ def calculate_differences(data : NDArray[np.int16]) -> NDArray[np.int16]:
 
 
 
-def encode_line( line :NDArray[np.int16], codetable_4bit: [dict[int , str]],codetable_12bit : [dict[int , str]] = None) -> str:
+def encode_line( line :NDArray[np.int16], codetable_4bit: dict[int , str],codetable_12bit : dict[int , str] = None) -> str:
     """
 
     :param line:  Arrayzeile welche die zu kodierenden Daten enthält.

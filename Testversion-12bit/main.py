@@ -86,12 +86,12 @@ if __name__ == "__main__":
     
     
 
-    data_array = remove_uneccesary_data(data)
+    data_array = remove_uneccesary_data(data) # Array mit den Daten
     original_daten = data_array.copy()
 
 
 
-    differences = enc.calculate_differences(data_array)
+    differences = enc.calculate_differences(data_array) #Array der Deltas 
     array_4bit,array_12bit  = split_data(differences)
 
     frequencys_4bit = huff.calculate_frequencys(array_4bit)
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     ratios = []
     overflowErrors = 0 
     for i in range(len(data_array)):
-
+        #Eine Zeile Kodieren. Aktuell schon mit berecheten Deltas aus Geschwindikeitsgründen
         encoded_line = enc.encode_line(differences[i], codetable_4bit,codetable_12bit)
         decoded_line = dec.decode(encoded_line,huffman_tree_4bit,huffman_tree_12bit)
         ratios.append(compression_ratio(original_daten[i], encoded_line))

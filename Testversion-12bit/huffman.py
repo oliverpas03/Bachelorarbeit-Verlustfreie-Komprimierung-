@@ -49,7 +49,7 @@ def calculate_frequencys( data ) -> NDArray[np.uint16]:
 
 
 
-def generate_huffmantree( frequencys : NDArray[int]) -> Node:
+def generate_huffmantree( frequencys : NDArray[np.int16]) -> Node:
     """ Erstellen von Huffman Baum aus Häufikeitstabelle
 
     Args:
