@@ -16,30 +16,47 @@ class Node:
         self.nodes = nodes 
         
     def __lt__(self, other):
+         if self.frequency != other.frequency:
 
-        if self.frequency == other.frequency:
-
-            return self.nodes >= other.nodes
-             
-        else:
             return self.frequency < other.frequency
+             
+         else:
+             return self.nodes > other.nodes
+
+        
     
 def calculate_frequencys( data : NDArray[np.int16]) -> NDArray[np.uint16]:
+    """ Berechnung der Häufigkeiten mithilfe von numpy.histogram().
+
+    Args:
+        data (NDArray[np.int16]): Array mit  Werten deren Häufigkeit betimmt werden soll
+
+    Returns:
+        NDArray[np.uint16]: Array das das Vorkommen von allen mögichen 16bit Integer Werte enthält
+    """
    
-   bins = np.arange(-32768,32769)
+    bins = np.arange(-32768,32769)
 
-   hist  : NDArray[np.int16]
+    hist  : NDArray[np.int16]
    
-   hist ,_= np.histogram(data,bins)
+    hist ,_= np.histogram(data,bins)
 
 
    
 
-   return hist
+    return hist
 
 
 
 def generate_huffmantree( frequencys : NDArray[np.int16]) -> Node:
+    """Erstellen des Huffmanbaumes mithilfe des Arrays an Häufigkeiten 
+
+    Args:
+        frequencys (NDArray[np.int16]): Array dessen Werte das Vorkommen des entsprechend verschobenen 16bit Integers in den Daten angibt
+
+    Returns:
+        Node: Wurzel des Huffman Baumes 
+    """
     heap = []
     test = len(frequencys)
     for i in range(0,len(frequencys)):
@@ -62,13 +79,13 @@ def generate_huffmantree( frequencys : NDArray[np.int16]) -> Node:
 
 
 def generate_codes(node: Node) -> dict[int, str]:
-    """ Generierung der 
+    """ Generierung der Codetabelle aus dem Baum. Aktuell noch als Dictionary muss noch auf Array verändert werden.
 
     Args:
-        node (Node): _description_
+        node (Node): Wurzel des Huffman Baumes
 
     Returns:
-        dict[int, str]: _description_
+        dict[int, str]: Codetabelle als dictionary
     """
     
     codetable = {}
@@ -103,9 +120,14 @@ def generate_codes(node: Node) -> dict[int, str]:
    
 
 def write_table_to_file(codetable : dict[int,str]) -> None:
+    """ Speichern von Codetabelle in Datei. Muss noch angepasst werden sodass Array von Codewörtern und deren Länge gespeichert wird  
+
+    Args:
+        codetable (dict[int,str]): _description_
+    """
 
   
-     with open(filename, 'w') as f:
+    with open(filename, 'w') as f:
          json.dump(codetable, f)
 
 

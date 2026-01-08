@@ -9,14 +9,16 @@ def calculate_differences_one_line( array : NDArray[np.int16]) -> NDArray[np.int
            new_array[i]=  array[i] - array[i-3]
        return new_array
 
-def calculate_differences(array : NDArray[np.int16]) -> NDArray[np.int16]:
-    """ Berechnung der Deltas
+def calculate_differences(data : NDArray[np.int16]) -> NDArray[np.int16]:
+    """Berechnung der Deltas für eine ganze Datei
 
+     Args:
+        array (NDArray[np.int16]): Array mit den Messwerten der ganzen Datei
 
-    :param array:
-    :return:
+     Returns:
+        NDArray[np.int16]: Array mit den Deltas
     """
-
+    array = data.copy()
     if array.ndim == 1:
         # 1D Array
         for i in range(3, len(array)):

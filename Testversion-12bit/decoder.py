@@ -44,6 +44,18 @@ def build_tree( codetable: dict[int,str]):
     return root
 
 def decode_huffman(tree: huff.Node,  bit_string:str)->tuple[int,int]:
+    """Dekodiert den ersten Wert aus der kodierten Nachricht 
+
+    Args:
+        tree (huff.Node): Huffmanbaum bzw Wurzel
+        bit_string (str): _description_
+
+    Raises:
+        ValueError: _description_
+
+    Returns:
+        tuple[int,int]: Wert und neuer Anfang in Nachricht
+    """
 
 
     
@@ -74,14 +86,34 @@ def decode_huffman(tree: huff.Node,  bit_string:str)->tuple[int,int]:
     return result, end
 
 def recombine_bits( four_bit : np.int16, twelve_bit: np.int16)->np.int16:
+    """ Zusammensetzen des Wertes aus den beiden Teilen 
 
+    Args:
+        four_bit (np.int16): 
+        twelve_bit (np.int16): _description_
+
+    Returns:
+        np.int16: Zusammengesetzter Wert
+    """
+    # Bits an ursprüngliche Stelle zurückschieben
     four_bit_shifted = (four_bit << 12) & 0xF000
-
+    
+    #Werte zusammensetzen
     recombined_value = ( four_bit_shifted | twelve_bit)
 
     return np.uint16(recombined_value).view(np.int16)
 
 def decode_both_huffmans(bit_string: str, tree_4bit, tree_12bit)-> NDArray[np.int16]:
+    """Dekodierung der Nachricht als String in ein Array mit Deltawerten
+
+    Args:
+        bit_string (str): Nachricht
+        tree_4bit (_type_): Huffmanbaum für 4 Bit Zahlen(0 bis 15)
+        tree_12bit (_type_): Huffmanbaum für 12 Bit ZAhlen(0 bis 4095)
+
+    Returns:
+        NDArray[np.int16]: Array mit Differenzwerten in 16 Bit Format 
+    """
 
     result = []
     while bit_string != "":
@@ -110,21 +142,39 @@ def decode_both_huffmans(bit_string: str, tree_4bit, tree_12bit)-> NDArray[np.in
 
      
 def decode_deltas( array ):
+    """ Wiederherstellung der Messwerte aus den Deltas 
+
+    Args:
+        array (NDArray[np.int16]): Array mit den Differenzen
+
+    Returns:
+        _type_: Array mit den Messwerten
+    """
     for i in range( 3,len(array)):
         array[i] = array[i-3] + array[i]
     return array
 
 
 def decode( bit_string, huffman_tree_4bit = None  , huffmantree_12bit = None  ):
-     codetable = {}
-     if ( codetable == None):
+    """Dekodierung der Werte aus kodierter NAchricht die noch als String gegeben ist 
+
+    Args:
+        bit_string (_type_): _description_
+        huffman_tree_4bit (_type_, optional): _description_. Defaults to None.
+        huffmantree_12bit (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    codetable = {}
+    if ( codetable == None):
          codetable = read_table_from_file()
          huffman_tree = build_tree(codetable)
      
     
 
-     array_differences = decode_both_huffmans(bit_string , huffman_tree_4bit,huffmantree_12bit)
+    array_differences = decode_both_huffmans(bit_string , huffman_tree_4bit,huffmantree_12bit)
 
-     array_data = decode_deltas( array_differences)
+    array_data = decode_deltas( array_differences)
 
-     return array_data
+    return array_data

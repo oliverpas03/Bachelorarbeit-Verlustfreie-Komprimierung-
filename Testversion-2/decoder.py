@@ -1,5 +1,6 @@
 import json
 import numpy as np 
+from numpy.typing import NDArray
 
 import huffman as huff
 
@@ -13,9 +14,17 @@ def read_table_from_file( ) -> dict[int,str]:
     return d 
 
 def build_tree( codetable: dict[int,str]):
+    """ Erstellen von Huffmanbaum aus Codetabelle
+
+    Args:
+        codetable (dict[int,str]): _description_
+
+    Returns:
+        _type_: _description_
+    """
      
-     root = huff.Node()
-     for char, code in codetable.items():
+    root = huff.Node()
+    for char, code in codetable.items():
         current = root
         for bit in code:
             if bit == '0':
@@ -30,9 +39,21 @@ def build_tree( codetable: dict[int,str]):
        
         current.symbol = char
     
-     return root
+    return root
 
-def decode_huffman(tree , bit_string):
+def decode_huffman(tree: huff.Node , bit_string:str)->NDArray[np.int16]:
+    """Dekodieren von Bitfolge als String in einzelne Werte
+
+    Args:
+        tree (Node): Wurzel von Huffman-Baum
+        bit_string (str): kodierte Nachricht als String 
+
+    Raises:
+        ValueError: Falls falsch dekodiert 
+
+    Returns:
+        NDArray[np.int16]: Array mit dekodierten Werten
+    """
 
     
     result = []
@@ -62,22 +83,40 @@ def decode_huffman(tree , bit_string):
         
 
      
-def decode_deltas( array ):
+def decode_deltas( array: NDArray[np.int16] )-> NDArray[np.int16]:
+    """ Wiederherstellung der Messwerte aus den Deltas 
+
+    Args:
+        array (NDArray[np.int16]): Array mit den Differenzen
+
+    Returns:
+        _type_: Array mit den Messwerten
+    """
     for i in range( 3,len(array)):
         array[i] = array[i-3] + array[i]
     return array
 
 
-def decode( bit_string, huffman_tree = None   ) :
-     codetable = {}
-     if ( codetable == None):
+def decode( bit_string, huffman_tree = None   )-> NDArray[np.int16] :
+    """_summary_
+
+    Args:
+        bit_string (_type_): Kodierte Nachricht
+        huffman_tree (_type_, optional): Huffman Baum. Kann mit Hilfe von Einlesen der Codetabelle ertellt werden falls nicht vorhanden
+                        
+
+    Returns:
+        NDArray[np.int16]: Array mit Messwerten 
+    """
+    codetable = {}
+    if ( codetable == None):
          codetable = read_table_from_file()
          huffman_tree = build_tree(codetable)
      
     
 
-     array_differences = decode_huffman(  huffman_tree, bit_string)
+    array_differences = decode_huffman(  huffman_tree, bit_string)
 
-     array_data = decode_deltas( array_differences)
+    array_data = decode_deltas( array_differences)
 
-     return array_data
+    return array_data

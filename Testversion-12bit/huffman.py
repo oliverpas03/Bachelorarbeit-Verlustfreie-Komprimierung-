@@ -19,29 +19,46 @@ class Node:
             return self.frequency < other.frequency
              
         else:
-            return self.frequency > other.frequency
+            return self.nodes > other.nodes
 
     
-def calculate_frequencys( data : NDArray[int]) -> NDArray[np.uint16]:
-   bins = []
-   if data.dtype == np.uint16:
+def calculate_frequencys( data ) -> NDArray[np.uint16]:
+    """Berechnung der Vorkommen der Werte für beide Teile (Vier und 12 Bit)
+
+    Args:
+        data (NDArray[int]): Array mit Werten deren Häufigkeit bestimmt werden muss
+
+    Returns:
+        NDArray[np.uint16]: Array mit Häufigkeiten entweder für Vier oder Zwölf Bit
+    """
+    bins = []
+    if data.dtype == np.uint16:
        bins = np.arange(0,4097)
-   if data.dtype == np.uint8:
+    if data.dtype == np.uint8:
        bins = np.arange(0,17)
 
 
 
    
-   hist ,_= np.histogram(data,bins)
+    hist ,_= np.histogram(data,bins)
 
 
    
 
-   return hist
+    return hist
 
 
 
 def generate_huffmantree( frequencys : NDArray[int]) -> Node:
+    """ Erstellen von Huffman Baum aus Häufikeitstabelle
+
+    Args:
+        frequencys (NDArray[int]): _description_
+
+    Returns:
+        Node: _description_
+    """
+
     heap = []
     test = len(frequencys)
     for i in range(0,len(frequencys)):
@@ -63,6 +80,14 @@ def generate_huffmantree( frequencys : NDArray[int]) -> Node:
 
 
 def generate_codes(node: Node) -> dict[int, str]:
+    """ Generierung der Codetabelle aus dem Baum. Aktuell noch als Dictionary muss noch auf Array verändert werden.
+
+    Args:
+        node (Node): Wurzel des Huffman Baumes
+
+    Returns:
+        dict[int, str]: Codetabelle als dictionary
+    """
     
     codetable = {}
     

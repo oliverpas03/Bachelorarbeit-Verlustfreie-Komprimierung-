@@ -88,7 +88,7 @@ if __name__ == "__main__":
     overflowErrors = 0 
     for i in range(len(data_array)):
 
-        encoded_line = enc.encode_line(data_array[i], codetable)
+        encoded_line = enc.encode_line(differences[i], codetable)
         decoded_line = dec.decode(encoded_line,huffman_tree)
         ratios.append(compression_ratio(original_daten[i], encoded_line))
        
