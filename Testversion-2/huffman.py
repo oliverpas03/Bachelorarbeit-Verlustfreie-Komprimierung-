@@ -21,7 +21,7 @@ class Node:
             return self.frequency < other.frequency
              
          else:
-             return self.nodes > other.nodes
+             return self.nodes < other.nodes
 
         
     
@@ -35,11 +35,9 @@ def calculate_frequencys( data : NDArray[np.int16]) -> NDArray[np.uint16]:
         NDArray[np.uint16]: Array das das Vorkommen von allen mögichen 16bit Integer Werte enthält. Rückgabewert muss wahrscheinlich noch angepasst werden 
     """
    
-    bins = np.arange(-32768,32769)
+    shifted = (data.flatten()).astype(np.int32) +32768
 
-    hist  : NDArray[np.int16]
-   
-    hist ,_= np.histogram(data,bins)
+    hist = np.bincount(shifted, minlength=65536)
 
 
    
@@ -60,7 +58,7 @@ def generate_huffmantree( frequencys : NDArray[np.int16]) -> Node:
     heap = []
     test = len(frequencys)
     for i in range(0,len(frequencys)):
-        value = i - 32678
+        value = i - 32768
 
         node = Node( symbol= value, frequency = frequencys[i])
         heap.append( node)
@@ -113,6 +111,8 @@ def generate_codes(node: Node) -> dict[int, str]:
                 stack.append((current_node.left, code + '0'))
     
    # write_table_to_file(codetable)
+    test1 = codetable[-32768]
+    test2 = codetable[32767]
     return codetable
 
    

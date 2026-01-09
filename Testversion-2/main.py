@@ -79,6 +79,9 @@ if __name__ == "__main__":
 
     differences = enc.calculate_differences(data_array) #Array mit den Deltas
     frequencys = huff.calculate_frequencys(differences) #Häufigkeitstabelle als Array
+
+
+    test = huff.generate_huffmantree([0,0,0,0,0,0])
    
 
     huffman_tree = huff.generate_huffmantree( frequencys)

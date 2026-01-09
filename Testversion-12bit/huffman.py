@@ -19,7 +19,7 @@ class Node:
             return self.frequency < other.frequency
              
         else:
-            return self.nodes > other.nodes
+            return self.nodes < other.nodes
 
     
 def calculate_frequencys( data ) -> NDArray[np.uint16]:
