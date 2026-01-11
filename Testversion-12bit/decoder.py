@@ -183,7 +183,7 @@ def decode_huffman( bytes :bytearray,tree_4bit, tree_12bit,  padding: np.uint8)-
         
 
      
-def decode_deltas( array ):
+def decode_deltas( data ):
     """ Wiederherstellung der Messwerte aus den Deltas 
 
     Args:
@@ -192,6 +192,7 @@ def decode_deltas( array ):
     Returns:
         _type_: Array mit den Messwerten
     """
+    array = data.copy()
     for i in range( 3,len(array)):
         array[i] = array[i-3] + array[i]
     return array

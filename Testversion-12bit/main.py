@@ -8,6 +8,9 @@ import decoder as dec
 import encoder as enc 
 import sys
 
+
+
+
 data_filename = 'Data/LOG10202.TXT'
 
 def compression_ratio(originaldaten , codierte_daten):

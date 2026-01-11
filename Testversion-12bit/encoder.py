@@ -6,6 +6,9 @@ def calculate_differences_one_line( array : NDArray[np.int16]) -> NDArray[np.int
     
        for i in range(3,len(array)):
            difference = array[i] -array[i-3]
+           if difference > 32767 or difference < -32768: 
+               raise ValueError
+           
            new_array[i]=  array[i] - array[i-3]
        return new_array
 
