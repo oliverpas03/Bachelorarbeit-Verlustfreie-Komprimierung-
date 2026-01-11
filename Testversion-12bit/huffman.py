@@ -3,6 +3,13 @@ import numpy as np
 import json
 from numpy.typing import NDArray
 
+EOF = 17 
+
+codetable_file_4bit = 'codetable_4bit.bin'
+codelengths_file_4bit = 'codelength_4bit.bin'
+
+codetable_file_12bit = 'codetable_12bit.bin'
+codelengths_file_12bit = 'codelength_12bit.bin'
 
 class Node:
     def __init__(self, symbol=None, frequency=None, nodes= 1):
@@ -35,7 +42,7 @@ def calculate_frequencys( data ) -> NDArray[np.uint16]:
     if data.dtype == np.uint16:
        bins = np.arange(0,4097)
     if data.dtype == np.uint8:
-       bins = np.arange(0,17)
+       bins = np.arange(0,18)
 
 
 
@@ -43,7 +50,7 @@ def calculate_frequencys( data ) -> NDArray[np.uint16]:
     hist ,_= np.histogram(data,bins)
 
 
-   
+    
 
     return hist
 
@@ -76,26 +83,29 @@ def generate_huffmantree( frequencys : NDArray[np.int16]) -> Node:
         new_node.right = second_smallest_frequency
 
         heapq.heappush(heap, new_node)
+    #write_tree_to_file(heap[0])
     return heap[0]
 
 
-def generate_codes(node: Node, type :str ) -> NDArray[np.void ]:
-    """ Generierung der Codetabelle aus dem Baum. Aktuell noch als Dictionary muss noch auf Array verändert werden.
+def generate_codes(node: Node, type :str ) -> tuple[NDArray[int], NDArray[np.uint8] ]:
+    """ Generierung der Codetabelle aus dem Baum.
 
     Args:
         node (Node): Wurzel des Huffman Baumes
 
     Returns:
-        dict[int, str]: Codetabelle als dictionary
+        dict[int, str]: Codetabelle als zwei arrays 
 
     """
     if type == 'four_bit':
 
-        dt = np.dtype([ ('code', np.uint16), ('length', np.uint8) ])
-        codetable = np.zeros(16, dtype=dt)
+       
+        codetable = np.zeros(17, dtype=np.uint16)
+        codelengths = np.zeros(17, dtype = np.uint8)
     else: 
-        dt = np.dtype([ ('code', np.uint32), ('length', np.uint8) ])
-        codetable = np.zeros(4096, dtype=dt)
+        
+        codetable = np.zeros(4096, dtype=np.uint32)
+        codelengths = np.zeros(4096, dtype = np.uint8)
 
   
     
@@ -112,8 +122,8 @@ def generate_codes(node: Node, type :str ) -> NDArray[np.void ]:
             # Blatt gefunden (Symbol vorhanden)
             if current_node.symbol is not None:
                 index = current_node.symbol 
-                codetable['code'][index] = code
-                codetable['length'][index] = length
+                codetable[index] = code
+                codelengths[index] = length
             
             # Rechts zuerst auf Stack (wird später verarbeitet)
             if current_node.right is not None:
@@ -125,22 +135,61 @@ def generate_codes(node: Node, type :str ) -> NDArray[np.void ]:
                 new_code = (code << 1) | 0
                 stack.append((current_node.left, new_code, length +1 ))
     
-   # write_table_to_file(codetable)
+    write_table_to_file(codetable,codelengths,type)
   
-    return codetable
+    return codetable,codelengths
 
    
 
-def write_table_to_file(codetable : dict[int,str]) -> None:
+def write_table_to_file(codetable : NDArray[np.uint64],lengths :NDArray[np.uint8],type = str) -> None:
+    """Schreibt die beiden arrays in einzelne dateien 
 
-  
-     with open(filename, 'w') as f:
-         json.dump(codetable, f)
+    Args:
+        codetable (NDArray[np.uint64]): _description_
+        lengths (NDArray[np.uint8]): _description_
+    """
+
+    if type == "four_bit":
+        codetable.tofile(codetable_file_4bit)
+        lengths.tofile(codelengths_file_4bit)
+    else:
+        codetable.tofile(codetable_file_12bit)
+        lengths.tofile(codelengths_file_12bit)
+
+    
 
 
 
+def write_tree_to_file( tree : Node )-> None: 
+    """ Baum als Array in Datei schreiben. Muss noch geändert werden. Wird viel zu groß
+
+    Args:
+        tree (Node): _description_
+    """
+    array = np.zeros(tree.nodes, dtype= np.int32)
+    stack = [ (tree,0)]
+
+    while stack != []:
+
+        node, index = stack.pop()
+        
+        if node is not None:
+           
+            if node.symbol is not None:
+              array[index]= node.symbol
+           
+            if node.right is not None:
+                array[index ] = -1 
+                stack.append((node.right, 2*index+2 ))
+            
+           
+            if node.left is not None:
+                array[index]= -1
+                stack.append( (node.left, 2*index+1))
+
+    array.tofile('huffmantree.bin')
 
 
- 
+    
 
 

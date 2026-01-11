@@ -29,28 +29,7 @@ def calculate_differences(data : NDArray[np.int16]) -> NDArray[np.int16]:
 
 
 
-def encode_line( line :NDArray[np.int16], codetable_4bit: dict[int , str],codetable_12bit : dict[int , str] = None) -> str:
-    """
 
-    :param line:  Arrayzeile welche die zu kodierenden Daten enthält.
-    :param codetable_4bit:
-    :param codetable_12bit:
-    :return: Kodierte Zeile als Bitstring
-    """
-
-    #differences = calculate_differences_one_line(line)
-
-    encoded_line = ''
-    front_4_bit = ((line >> 12)& 0x000F).astype(np.uint8)
-    back_12_bit = (line & 0x0FFF).astype(np.uint16)
-    for i in range(0,len(line)):
-
-        encoded_line = encoded_line + codetable_4bit[front_4_bit[i]]+codetable_12bit[back_12_bit[i]]
-
-    
-
-    
-    return encoded_line
 
 
 def encode_line( line :NDArray[np.int16], codetable_4bit : NDArray[np.void] = None,codetable_12bit : NDArray[np.void] = None) -> tuple[bytearray, np.uint8]:
@@ -82,8 +61,8 @@ def encode_line( line :NDArray[np.int16], codetable_4bit : NDArray[np.void] = No
        
         
       
-        code_front = int(codetable_4bit['code'][front])
-        length_front = int(codetable_4bit['length'][front]) 
+        code_front = int(codetable_4bit[0][front])
+        length_front = int(codetable_4bit[1][front]) 
       
        
         buffer  = (buffer << length_front) | code_front 
@@ -102,8 +81,8 @@ def encode_line( line :NDArray[np.int16], codetable_4bit : NDArray[np.void] = No
             position -= 8 
         
         
-        code_back = int(codetable_12bit['code'][back])
-        length_back = int(codetable_12bit['length'][back])
+        code_back = int(codetable_12bit[0][back])
+        length_back = int(codetable_12bit[1][back])
       
        
         buffer = (buffer << length_back) | code_back 

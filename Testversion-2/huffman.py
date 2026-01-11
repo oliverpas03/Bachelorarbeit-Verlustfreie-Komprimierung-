@@ -3,7 +3,8 @@ import numpy as np
 import json 
 from numpy.typing import NDArray
 
-filename  = 'Huffman_tabelle.json'
+codetable_file = 'codetable.bin'
+codelengths_file = 'codelength.bin'
 
 
 
@@ -76,7 +77,7 @@ def generate_huffmantree( frequencys : NDArray[np.int16]) -> Node:
     return heap[0]
 
 
-def generate_codes(node: Node) -> NDArray[np.void ]:
+def generate_codes(node: Node) -> tuple[NDArray[np.uint64], NDArray[np.uint8]]:
     """ Generierung der Codetabelle aus dem Baum. Aktuell noch als Dictionary muss noch auf Array verändert werden.
 
     Args:
@@ -87,8 +88,9 @@ def generate_codes(node: Node) -> NDArray[np.void ]:
 
     """
 
-    dt = np.dtype([ ('code', np.int64), ('length', np.uint8) ])
-    codetable = np.zeros(65536, dtype=dt)
+  
+    codetable = np.zeros(65536, dtype=np.uint64)
+    codelengths = np.zeros(65536, dtype = np.uint8)
     
   
     
@@ -105,8 +107,8 @@ def generate_codes(node: Node) -> NDArray[np.void ]:
             # Blatt gefunden (Symbol vorhanden)
             if current_node.symbol is not None:
                 index = current_node.symbol +32768
-                codetable['code'][index] = code
-                codetable['length'][index] = length
+                codetable[index] = code
+                codelengths[index] = length
             
             # Rechts zuerst auf Stack (wird später verarbeitet)
             if current_node.right is not None:
@@ -118,25 +120,26 @@ def generate_codes(node: Node) -> NDArray[np.void ]:
                 new_code = (code << 1) | 0
                 stack.append((current_node.left, new_code, length +1 ))
     
-   # write_table_to_file(codetable)
-    test1 = codetable['code'][-32768]
-    test2 = codetable['code'][32767]
-    return codetable
+    write_table_to_file(codetable,codelengths)
+  
+    return codetable,codelengths
 
    
 
    
 
-def write_table_to_file(codetable : NDArray[np.void]) -> None:
-    """ Speichern von Codetabelle in Datei. Muss noch angepasst werden sodass Array von Codewörtern und deren Länge gespeichert wird  
+def write_table_to_file(codetable : NDArray[np.uint64],lengths :NDArray[np.uint8]) -> None:
+    """Schreibt die beiden arrays in einzelne dateien 
 
     Args:
-        codetable (dict[int,str]): _description_
+        codetable (NDArray[np.uint64]): _description_
+        lengths (NDArray[np.uint8]): _description_
     """
+    codetable.tofile(codetable_file)
+    lengths.tofile(codelengths_file)
 
   
-    with open(filename, 'w') as f:
-         json.dump(codetable, f)
+    
 
 
 

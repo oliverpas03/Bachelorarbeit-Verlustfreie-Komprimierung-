@@ -60,8 +60,8 @@ def encode_line( line :NDArray[np.int16], codetable : NDArray[np.void] = None) -
         index = np.uint16(np.int32(value) + 32768)
         
       
-        code = int(codetable['code'][index])
-        length = int(codetable['length'][index])
+        code = int(codetable[0][index])
+        length = int(codetable[1][index])
       
         # Code in den Buffer schieben
         buffer = (buffer << length) | code 

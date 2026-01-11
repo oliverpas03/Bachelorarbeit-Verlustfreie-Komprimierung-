@@ -86,6 +86,7 @@ if __name__ == "__main__":
     huffman_tree = huff.generate_huffmantree( frequencys)
 
     codetable   = huff.generate_codes(huffman_tree)
+    test = codetable
     ratios = []
     overflowErrors = 0 
     for i in range(len(data_array)):
