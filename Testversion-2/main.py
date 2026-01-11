@@ -11,20 +11,19 @@ import encoder as enc
 data_filename = 'Data/LOG10202.txt'
 
 
-    
-    
-"""_summary_
 
-    Args:
-        originaldaten (_type_): Eine numpy array Zeile der originalen Daten
-        codierte_daten (string): Zeile in kodierter Form als String
 
-    Returns:
-        _type_: _description_
-""" 
 def compression_ratio(originaldaten , codierte_daten):
-   
-   return (len(originaldaten)* 16)/ len(codierte_daten)
+    """_summary_: Berechnung von Komressionsrate
+
+        Args:
+            originaldaten (_type_): Eine numpy array Zeile der originalen Daten
+            codierte_daten (string): Zeile in kodierter Form als String
+
+        Returns:
+            _type_: _description_
+    """
+    return (len(originaldaten)* 16)/ (len(codierte_daten)*8)
 def remove_uneccesary_data( data) -> NDArray[np.int16]:
     """_summary_: Bereinigung der Daten und Umwandlung in numpy Array
                   
@@ -86,13 +85,14 @@ if __name__ == "__main__":
 
     huffman_tree = huff.generate_huffmantree( frequencys)
 
-    codetable : dict[int, str]  = huff.generate_codes(huffman_tree)
+    codetable   = huff.generate_codes(huffman_tree)
     ratios = []
     overflowErrors = 0 
     for i in range(len(data_array)):
         #Eine Zeile Kodieren. Aktuell schon mit berecheten Deltas aus Geschwindikeitsgründen
-        encoded_line = enc.encode_line(differences[i], codetable)
-        decoded_line = dec.decode(encoded_line,huffman_tree)
+        #padding provisorisch, braucht noch end of frame signal 
+        encoded_line,padding  = enc.encode_line(differences[i], codetable)
+        decoded_line = dec.decode(encoded_line,huffman_tree, padding)
         ratios.append(compression_ratio(original_daten[i], encoded_line))
        
         if np.array_equal(original_daten[i], decoded_line) == False:

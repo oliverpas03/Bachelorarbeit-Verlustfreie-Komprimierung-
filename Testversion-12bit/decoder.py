@@ -103,35 +103,77 @@ def recombine_bits( four_bit : np.int16, twelve_bit: np.int16)->np.int16:
 
     return np.uint16(recombined_value).view(np.int16)
 
-def decode_both_huffmans(bit_string: str, tree_4bit, tree_12bit)-> NDArray[np.int16]:
-    """Dekodierung der Nachricht als String in ein Array mit Deltawerten
+
+
+
+def decode_huffman( bytes :bytearray,tree_4bit, tree_12bit,  padding: np.uint8)->NDArray[np.int16]:
+    """Dekodieren von Bitfolge als String in einzelne Werte
 
     Args:
-        bit_string (str): Nachricht
-        tree_4bit (_type_): Huffmanbaum für 4 Bit Zahlen(0 bis 15)
-        tree_12bit (_type_): Huffmanbaum für 12 Bit ZAhlen(0 bis 4095)
+        tree (Node): Wurzel von Huffman-Baum
+        bit_string (str): kodierte Nachricht als String 
+
+    Raises:
+        ValueError: Falls falsch dekodiert 
 
     Returns:
-        NDArray[np.int16]: Array mit Differenzwerten in 16 Bit Format 
+        NDArray[np.int16]: Array mit dekodierten Werten
     """
 
+    
     result = []
-    while bit_string != "":
-        four_bits, endposition  = decode_huffman(tree_4bit ,bit_string)
+    temporary_4bit = 0
+    node = tree_4bit
+    current_tree = tree_4bit
+    final_byte = len(bytes)
 
-        bit_string = bit_string[endposition:]
+    message_bitnumber = np.uint16((len(bytes)*8) - np.uint16(padding ))
+    proccesed_bits = 0
+    
+    for i in range(len(bytes)):
 
-        twelve_bits , endposition = decode_huffman(tree_12bit,bit_string)
+        for j in range(7,-1,-1):
+          if proccesed_bits == message_bitnumber:
+              #abbrechen wenn alle bits der nchricht betrachtet wuden 
+              break
+          
+          byte = bytes[i]
+          #aktuelles bit was betrachtet werden soll aus byte herausfiltern 
+          bit = (byte >> j) & 1
+          proccesed_bits += 1
 
-        bit_string = bit_string[endposition:]
-
-        value = recombine_bits(four_bits,twelve_bits)
-        result.append(value)
-    return result
 
 
 
-
+          if bit == 0:
+            node = node.left
+          elif bit == 1:
+            node = node.right
+        
+          # Fehlerbehandlung
+          if node is None:
+             raise ValueError("Ungültiger Pfad")
+        
+          # Blatt erreicht?
+          if node.left is None and node.right is None:
+           
+            
+            if current_tree == tree_4bit:
+             
+                temporary_4bit = node.symbol
+                node = tree_12bit
+                current_tree = tree_12bit
+            else: 
+               
+                
+                value = recombine_bits( temporary_4bit, node.symbol)
+                node = tree_4bit
+                current_tree = tree_4bit
+                result.append(value)
+            
+            
+    array = np.array(result)
+    return array
 
 
 
@@ -155,7 +197,7 @@ def decode_deltas( array ):
     return array
 
 
-def decode( bit_string, huffman_tree_4bit = None  , huffmantree_12bit = None  ):
+def decode( bit_string, padding,  huffman_tree_4bit = None  , huffmantree_12bit = None  ):
     """Dekodierung der Werte aus kodierter NAchricht die noch als String gegeben ist 
 
     Args:
@@ -173,7 +215,7 @@ def decode( bit_string, huffman_tree_4bit = None  , huffmantree_12bit = None  ):
      
     
 
-    array_differences = decode_both_huffmans(bit_string , huffman_tree_4bit,huffmantree_12bit)
+    array_differences = decode_huffman(bit_string , huffman_tree_4bit,huffmantree_12bit,padding)
 
     array_data = decode_deltas( array_differences)
 

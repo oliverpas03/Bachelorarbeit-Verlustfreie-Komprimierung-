@@ -41,7 +41,7 @@ def build_tree( codetable: dict[int,str]):
     
     return root
 
-def decode_huffman(tree: huff.Node , bit_string:str)->NDArray[np.int16]:
+def decode_huffman(tree: huff.Node , bytes :bytearray, padding: np.uint8)->NDArray[np.int16]:
     """Dekodieren von Bitfolge als String in einzelne Werte
 
     Args:
@@ -58,26 +58,41 @@ def decode_huffman(tree: huff.Node , bit_string:str)->NDArray[np.int16]:
     
     result = []
     node = tree
+    final_byte = len(bytes)
+
+    message_bitnumber = np.uint16((len(bytes)*8) - np.uint16(padding ))
+    proccesed_bits = 0
     
-    for bit in bit_string:
-      
-       
-        
-        
-        if bit == "0":
+    for i in range(len(bytes)):
+
+        for j in range(7,-1,-1):
+          if proccesed_bits == message_bitnumber:
+              #abbrechen wenn alle bits der nchricht betrachtet wuden 
+              break
+          
+          byte = bytes[i]
+          #aktuelles bit was betrachtet werden soll aus byte herausfiltern 
+          bit = (byte >> j) & 1
+          proccesed_bits += 1
+
+
+
+
+          if bit == 0:
             node = node.left
-        elif bit == "1":
+          elif bit == 1:
             node = node.right
         
-        # Fehlerbehandlung
-        if node is None:
-            raise ValueError("Ungültiger Pfad")
+          # Fehlerbehandlung
+          if node is None:
+             raise ValueError("Ungültiger Pfad")
         
-        # Blatt erreicht?
-        if node.left is None and node.right is None:
+          # Blatt erreicht?
+          if node.left is None and node.right is None:
             result.append(node.symbol)
             
             node = tree
+            
     array = np.array(result)
     return array
         
@@ -97,7 +112,7 @@ def decode_deltas( array: NDArray[np.int16] )-> NDArray[np.int16]:
     return array
 
 
-def decode( bit_string, huffman_tree = None   )-> NDArray[np.int16] :
+def decode( bit_string, huffman_tree  , padding: np.uint8  )-> NDArray[np.int16] :
     """_summary_
 
     Args:
@@ -115,7 +130,7 @@ def decode( bit_string, huffman_tree = None   )-> NDArray[np.int16] :
      
     
     #Aus Nachricht die Differenzwerte generieren.
-    array_differences = decode_huffman(  huffman_tree, bit_string)
+    array_differences = decode_huffman(  huffman_tree, bit_string, padding )
 
     #Aus Differenzen die Messwerte berechen 
     array_data = decode_deltas( array_differences)

@@ -79,7 +79,7 @@ def generate_huffmantree( frequencys : NDArray[np.int16]) -> Node:
     return heap[0]
 
 
-def generate_codes(node: Node) -> dict[int, str]:
+def generate_codes(node: Node, type :str ) -> NDArray[np.void ]:
     """ Generierung der Codetabelle aus dem Baum. Aktuell noch als Dictionary muss noch auf Array verändert werden.
 
     Args:
@@ -87,33 +87,46 @@ def generate_codes(node: Node) -> dict[int, str]:
 
     Returns:
         dict[int, str]: Codetabelle als dictionary
+
     """
-    
-    codetable = {}
+    if type == 'four_bit':
+
+        dt = np.dtype([ ('code', np.uint16), ('length', np.uint8) ])
+        codetable = np.zeros(16, dtype=dt)
+    else: 
+        dt = np.dtype([ ('code', np.uint32), ('length', np.uint8) ])
+        codetable = np.zeros(4096, dtype=dt)
+
+  
     
     if node is None:
         return codetable
     
-    # Stack: (node, code)
-    stack = [(node, '')]
+   
+    stack = [(node, 0, 0)]
     
     while stack:
-        current_node, code = stack.pop()
+        current_node, code , length= stack.pop()
         
         if current_node is not None:
             # Blatt gefunden (Symbol vorhanden)
             if current_node.symbol is not None:
-                codetable[current_node.symbol] = code
+                index = current_node.symbol 
+                codetable['code'][index] = code
+                codetable['length'][index] = length
             
             # Rechts zuerst auf Stack (wird später verarbeitet)
             if current_node.right is not None:
-                stack.append((current_node.right, code + '1'))
+                new_code = ( code << 1) | 1 
+                stack.append((current_node.right, new_code, length +1 ))
             
             # Links danach (wird zuerst verarbeitet - DFS)
             if current_node.left is not None:
-                stack.append((current_node.left, code + '0'))
+                new_code = (code << 1) | 0
+                stack.append((current_node.left, new_code, length +1 ))
     
    # write_table_to_file(codetable)
+  
     return codetable
 
    

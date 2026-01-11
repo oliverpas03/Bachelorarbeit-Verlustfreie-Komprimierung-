@@ -30,14 +30,14 @@ def calculate_differences(data : NDArray[np.int16]) -> NDArray[np.int16]:
     if array.ndim == 1:
         # 1D Array
         for i in range(3, len(array)):
-            array[i] = array[i] - array[i-3]
+            array[i] = data[i] - data[i-3]
     else:
           array[:, 3:] = array[:, 3:] - array[:, :-3]
     return array
 
 
 
-def encode_line( line :NDArray[np.int16], codetable : dict[int , str] = None) -> str:
+def encode_line( line :NDArray[np.int16], codetable : NDArray[np.void] = None) -> tuple[bytearray, np.uint8]:
     """Kodierung einer Zeile
 
     Args:
@@ -49,10 +49,44 @@ def encode_line( line :NDArray[np.int16], codetable : dict[int , str] = None) ->
     """
 
     #differences = calculate_differences_one_line(line)
-    encoded_line = ''
+ 
+    encoded_line = bytearray()
+    
+    buffer = 0 
+    position = 0 
+    
     for value in line:
-        encoded_line = encoded_line + codetable[value]
-    return encoded_line
+        # Index-Berechnung für int16
+        index = np.uint16(np.int32(value) + 32768)
+        
+      
+        code = int(codetable['code'][index])
+        length = int(codetable['length'][index])
+      
+        # Code in den Buffer schieben
+        buffer = (buffer << length) | code 
+        position += length 
+        
+        # Sobald wir mindestens ein Byte (8 Bit) zusammen haben
+        while position >= 8:
+            shift = position - 8 
+            # Das oberste (älteste) Byte extrahieren
+            byte = (buffer >> shift) & 0xFF
+            encoded_line.append(byte)
+            
+            # Das geschriebene Byte aus dem Buffer löschen
+            # (1 << shift) - 1 erzeugt eine Maske für die verbleibenden Bits
+            buffer &= (1 << shift) - 1 
+            position -= 8 
 
+    # Padding für das letzte Byte
+    padding = 0
+    if position > 0:
+        padding = 8 - position
+        # Restliche Bits nach links schieben (MSB-Ausrichtung)
+        byte = (buffer << padding) & 0xFF
+        encoded_line.append(byte)
+
+    return encoded_line, np.uint8(padding)
 
 

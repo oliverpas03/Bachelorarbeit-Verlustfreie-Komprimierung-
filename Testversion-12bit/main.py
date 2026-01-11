@@ -20,7 +20,7 @@ def compression_ratio(originaldaten , codierte_daten):
         Returns:
             _type_: _description_
     """
-    return (len(originaldaten)* 16)/ len(codierte_daten)
+    return (len(originaldaten)* 16)/ (len(codierte_daten)*8)
 def remove_uneccesary_data( data) -> NDArray[np.int16]:
     """_summary_: Bereinigung der Daten und Umwandlung in numpy Array
 
@@ -101,15 +101,15 @@ if __name__ == "__main__":
     huffman_tree_12bit = huff.generate_huffmantree( frequencys_12bit)
     huffman_tree_4bit = huff.generate_huffmantree(frequencys_4bit)
 
-    codetable_12bit : dict[int, str]  = huff.generate_codes(huffman_tree_12bit)
-    codetable_4bit: dict[int, str] = huff.generate_codes(huffman_tree_4bit)
+    codetable_12bit   = huff.generate_codes(huffman_tree_12bit, "twelwe_bit")
+    codetable_4bit = huff.generate_codes(huffman_tree_4bit, "four_bit")
     codetable = (codetable_4bit,codetable_12bit)
     ratios = []
     overflowErrors = 0 
     for i in range(len(data_array)):
         #Eine Zeile Kodieren. Aktuell schon mit berecheten Deltas aus Geschwindikeitsgründen
-        encoded_line = enc.encode_line(differences[i], codetable_4bit,codetable_12bit)
-        decoded_line = dec.decode(encoded_line,huffman_tree_4bit,huffman_tree_12bit)
+        encoded_line, padding = enc.encode_line(differences[i], codetable_4bit,codetable_12bit)
+        decoded_line = dec.decode(encoded_line,padding, huffman_tree_4bit,huffman_tree_12bit)
         ratios.append(compression_ratio(original_daten[i], encoded_line))
        
         if np.array_equal(original_daten[i], decoded_line) == False:
